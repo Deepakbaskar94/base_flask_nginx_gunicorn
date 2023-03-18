@@ -1,4 +1,4 @@
-1. gunicorn service
+1. gunicorn service (etc/systemd/system/yourservicename.service)
 2. change permission of a folder
 3. create a folder link
 
