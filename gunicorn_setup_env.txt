@@ -1,0 +1,32 @@
+1. gunicorn service
+2. change permission of a folder
+3. create a folder link
+
+-----------After github action, write  a service for the gunicorn like the below one
+-----------usually User will be root and Group will be www-data
+-----------to give permission (sudo chown -R root:www-data directoryname) (sudo chmod -R 755 directoryname)
+----------to change user of a directory (sudo chown -R username directoryname)
+
+
+[Unit]
+Description=Gunicorn instance to serve expatriation
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+
+WorkingDirectory=/home/ubuntu/expatriation_link/Expatriation/api
+Environment="PATH=/home/ubuntu/expatriation_link/venv/bin"
+EnvironmentFile=/home/ubuntu/expatriation_link/.env
+ExecStart=/home/ubuntu/expatriation_link/venv/bin/gunicorn --bind 0.0.0.0:5000 wsgi:app
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+----------To create a symbolic link and to avoid too many system links error
+https://www.baeldung.com/linux/too-many-levels-of-symlinks
+go to the directory 
+ln -s "$(pwd)/source" outputdir
