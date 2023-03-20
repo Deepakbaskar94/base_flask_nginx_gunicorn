@@ -1,0 +1,98 @@
+Setting up flask for gunicorn and nginx:
+       
+         Once Logged into the instance.
+
+            Install Required Dependencies:
+                    sudo apt-get update -y
+                    sudo apt-get upgrade -y
+                    sudo apt-get install python3 python3-pip python3-dev build-essential libssl-dev libffi-dev python3-setuptools -y
+                    sudo apt-get install python3-venv -y
+                    
+                    
+            Install Nginx Web Server:
+                    sudo apt-get install nginx -y
+                    sudo systemctl start nginx
+                    sudo systemctl enable nginx
+                    
+            Keep your flask application in one location:
+                    create and setup up your virtualenv with all the requirements installed. (python3 -m venv venv)
+                    install inside the environment
+                        pip install wheel
+                        pip install gunicorn flask
+                    
+            Create a WSGI Entry Point for Gunicorn:
+                    source venv/bin/activate
+                    nano ~/project/wsgi.py
+                    
+                            from flaskapp import app
+                            if __name__ == "__main__":
+                                app.run()
+                                
+                    gunicorn --bind 0.0.0.0:5000 wsgi:app
+                    deactivate
+                    
+            Create a Systemd Service: (add the env variable location here as EnvironmentFile)
+                    nano /etc/systemd/system/expatriation.service
+                    
+                        [Unit]
+                        Description=Gunicorn instance to serve expatriation
+                        After=network.target
+                        [Service]
+                        User=ubuntu
+                        Group=ubuntu
+
+                        WorkingDirectory=/home/ubuntu/expatriation_link/Expatriation/api
+                        Environment="PATH=/home/ubuntu/expatriation_link/venv/bin"
+                        EnvironmentFile=/home/ubuntu/yourenvfilelocation
+
+                        ExecStart=/home/ubuntu/expatriation_link/venv/bin/gunicorn --bind 0.0.0.0:5000 wsgi:app
+                        [Install]
+                        WantedBy=multi-user.target
+
+                        
+            Depends up on your user and group give permission:
+                        chown -R root:www-data /root/project
+                        chmod -R 775 /root/project
+                        
+                        systemctl daemon-reload
+                        systemctl start expatriation
+                        systemctl enable expatriation
+                        systemctl status expatriation
+                        
+            Configure Nginx as a Reverse Proxy for Flask Application
+                        nano /etc/nginx/conf.d/flask.conf
+                        
+                                server {
+                                            listen 80;
+                                            server_name *.amazonaws.com;
+
+                                            location / {
+                                                include proxy_params;
+                                                proxy_pass  http://127.0.0.1:5000;
+                                            }
+                                        }
+                                        
+                        systemctl restart nginx
+                        
+
+
+
+
+Inside python load env as given below to use it in python :
+
+            from dotenv import load_dotenv
+            import os
+            
+            env = ".env" if len(sys.argv) < 2 else ".env." + sys.argv[1]
+            load_dotenv(dotenv_path=env)
+            
+            config = {}
+            
+            if not config:
+                config['app_host'] = os.environ['APP_HOST']
+                config['app_port'] = os.environ['APP_PORT']
+                config['app_debug'] = os.environ['APP_DEBUG']
+            
+            
+
+                
